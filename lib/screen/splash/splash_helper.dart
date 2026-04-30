@@ -12,9 +12,9 @@ class SplashScreenHelper {
   }
 
   Future<void> manageUser() async {
-    'Splash timer started. Navigating to onboarding.'.infoLogs();
+    'Splash timer started. Navigating to notification demo.'.infoLogs();
     Future.delayed(const Duration(seconds: 2), () {
-      RouteHelper.instance.goToOnBoarding();
+      RouteHelper.instance.goToNotificationDemo();
     });
   }
 }

@@ -10,5 +10,5 @@ class RouteHelper {
 
   void goToBack() => Get.back();
 
-  void goToOnBoarding() => Get.toNamed(RouteConstant.onBoarding);
+  void goToNotificationDemo() => Get.offNamed(RouteConstant.notificationDemo);
 }

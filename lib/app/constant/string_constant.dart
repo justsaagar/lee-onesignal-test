@@ -8,9 +8,6 @@ class StringConstant {
   static const String appName = 'Love Story Unicorn';
   static const String welcomeToLoveStory = 'welcome to love story';
   static const String aRealLoveStoryMarriage = 'a real love story marriage';
-  static const String onboardingFirst =
-      'a wholesome place to increase love in your life ';
-  static const String onboardingSecond = 'get your happily ever after';
   static const String createAccount = 'create an account';
   static const String welcomeBack = 'Welcome back';
   static const String loginAccount = 'Login to your account';
