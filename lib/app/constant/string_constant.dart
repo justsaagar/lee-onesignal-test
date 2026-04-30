@@ -1,10 +1,6 @@
-class AppCollectionConstants {
-  static const String utils = 'utils';
-}
-
 class AppConstants {
   static const String profilePicture =
-      'https://firebasestorage.googleapis.com/v0/b/love-story-434917.firebasestorage.app/o/sign_up_unicorn.png?alt=media';
+      'https://example.com/profile-picture.png';
 }
 
 class StringConstant {

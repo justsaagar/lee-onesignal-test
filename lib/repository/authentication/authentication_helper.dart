@@ -1,27 +1,23 @@
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:untitled/app/helper/extension_helper.dart';
 import 'package:untitled/repository/authentication/auth_repository.dart';
 
 class AuthRepositoryImpl extends AuthRepository {
+  AppAuthUser? _currentUser;
+
   // ===================================== Sign In ======================================= //
   @override
-  Future<User?> logIn(String emailAddress, String password) async {
+  Future<AppAuthUser?> logIn(String emailAddress, String password) async {
     try {
-      final authUser = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailAddress,
-        password: password,
-      );
-      if (authUser.user != null) {
+      if (emailAddress.isNotEmpty && password.isNotEmpty) {
+        _currentUser = AppAuthUser(
+          id: emailAddress,
+          email: emailAddress,
+        );
         'User verified successfully'.showSuccess();
-        return authUser.user;
+        return _currentUser;
       }
-    } on FirebaseAuthException catch (e) {
-      'Catch FirebaseAuthException in logIn --> ${e.message}'.errorLogs();
-      e.message?.showError();
     } on SocketException catch (e) {
       'Catch SocketException in logIn --> ${e.message}'.errorLogs();
       e.message.showError();
@@ -32,30 +28,19 @@ class AuthRepositoryImpl extends AuthRepository {
   // ===================================== Sign out ======================================= //
   @override
   Future<void> signOut() async {
-    try {
-      await FirebaseAuth.instance.signOut();
-    } catch (e) {
-      'SignOut Error: $e'.errorLogs();
-    }
+    _currentUser = null;
   }
 
   // ===================================== Register ======================================= //
   @override
-  Future<User?> registerWithEmailAndPassword(
+  Future<AppAuthUser?> registerWithEmailAndPassword(
     String email,
     String password,
   ) async {
-    try {
-      final UserCredential authUser = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
-      return authUser.user;
-    } on FirebaseAuthException catch (e) {
-      'Catch FirebaseAuthException in registerWithEmailAndPassword --> ${e.message}'
-          .errorLogs();
-      if (e.code == 'email-already-in-use') {
-        "The email you entered is already in use".showError();
-      }
+    if (email.isNotEmpty && password.isNotEmpty) {
+      return _currentUser = AppAuthUser(id: email, email: email);
     }
+    'Unable to register user with empty credentials'.showError();
     return null;
   }
 
@@ -64,23 +49,20 @@ class AuthRepositoryImpl extends AuthRepository {
   @override
   Future<bool> sendPasswordOnEmail(String email) async {
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      return true;
-    } on FirebaseAuthException catch (e) {
-      'Catch FirebaseAuthException in sendPasswordOnEmail --> ${e.message}'
-          .errorLogs();
-      e.message?.showError();
+      if (email.contains('@')) return true;
+      'Please enter a valid email'.showError();
     } on SocketException catch (e) {
       'Catch SocketException in sendPasswordOnEmail --> ${e.message}'
           .errorLogs();
       e.message.showError();
+      return false;
     }
     return false;
   }
 
-  // ===================================== Upload to Firebase ======================================= //
+  // ===================================== Upload media ======================================= //
   @override
-  Future<String?> uploadToFirebase(
+  Future<String?> uploadMedia(
     File file, {
     bool isVideo = false,
     bool isHeadShot = false,
@@ -88,38 +70,14 @@ class AuthRepositoryImpl extends AuthRepository {
     try {
       final String fileName = file.path.split('/').last;
       'File name --> $fileName'.infoLogs();
-
-      final folderRef = FirebaseStorage.instance.ref().child(
-        '${FirebaseAuth.instance.currentUser?.uid}/${isVideo ? 'videos' : 'image'}',
-      );
-
-      final Uint8List imageData = await file.readAsBytes();
-      final Reference ref = folderRef.child(
-        isVideo
-            ? 'introductionVideo'
-            : isHeadShot
-            ? 'headShotImage'
-            : 'fullBodyImage',
-      );
-      await ref.putData(
-        imageData,
-        SettableMetadata(
-          contentType: isVideo ? 'video/mp4' : 'image/png',
-          cacheControl: 'no-store',
-        ),
-      );
-
-      final String downloadUrl = (await ref.getDownloadURL())
-          .split('&token')
-          .first;
-      'File uploaded successfully! Download URL: $downloadUrl'.logs();
-      return downloadUrl;
-    } on FirebaseException catch (e) {
-      'Catch FirebaseException in uploadToFirebase --> ${e.message}'
-          .errorLogs();
-      e.message?.showError();
+      if (await file.exists()) {
+        final String localPath = file.uri.toString();
+        'File available locally: $localPath'.logs();
+        return localPath;
+      }
+      'Selected file does not exist'.showError();
     } on SocketException catch (e) {
-      'Catch SocketException in uploadToFirebase --> ${e.message}'.errorLogs();
+      'Catch SocketException in uploadMedia --> ${e.message}'.errorLogs();
       e.message.showError();
     }
     return null;

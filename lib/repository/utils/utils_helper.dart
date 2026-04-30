@@ -1,24 +1,40 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:untitled/app/constant/string_constant.dart';
+import 'package:untitled/app/constant/app_asset.dart';
 import 'package:untitled/app/helper/extension_helper.dart';
 import 'package:untitled/repository/utils/utils_repository.dart';
 
 class UtilsRepositoryImpl extends UtilsRepository {
-  final CollectionReference _utilsCollection =
-      FirebaseFirestore.instance.collection(AppCollectionConstants.utils);
+  static const Map<String, dynamic> _localUtilsData = {
+    'onboarding': {
+      'onSliders': [
+        {
+          'image': AppAsset.appBackground,
+          'headerLine': 'Welcome to the app',
+          'subHeaderLine': 'Use this template to quickly bootstrap your flow',
+          'isShow': true,
+        },
+        {
+          'image': AppAsset.appBackground,
+          'headerLine': 'Clean architecture',
+          'subHeaderLine': 'GetX + dependency injection + repository pattern',
+          'isShow': true,
+        },
+        {
+          'image': AppAsset.appBackground,
+          'headerLine': 'Ready for customization',
+          'subHeaderLine': 'Replace placeholder content with your own product data',
+          'isShow': true,
+        },
+      ],
+    },
+  };
 
   @override
   Future<Map<String, dynamic>?> getUtilsData(String collectionName) async {
-    try {
-      final DocumentSnapshot snapshot =
-          await _utilsCollection.doc(collectionName).get();
-      if (snapshot.exists && snapshot.data() != null) {
-        return snapshot.data()! as Map<String, dynamic>;
-      }
-    } on FirebaseException catch (e) {
-      'Catch FirebaseException in getUtilsData --> ${e.message}'.errorLogs();
-      e.message?.showError();
+    final dynamic result = _localUtilsData[collectionName];
+    if (result is Map<String, dynamic>) {
+      return result;
     }
+    'No local utils data found for: $collectionName'.warningLogs();
     return null;
   }
 }
