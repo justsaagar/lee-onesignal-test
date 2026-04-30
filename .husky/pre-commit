@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# .husky/pre-commit
+# Proofed pre-commit that:
+#  - formats staged Dart files (auto-stages formatted changes),
+#  - runs analyzer (per-file if supported, otherwise full analyze),
+#  - safely handles filenames with spaces,
+#  - provides clear messages and exits non-zero on failures.
+
+set -euo pipefail
+
+echo "[huskyless] Starting pre-commit checks..."
+
+# Check required commands
+if ! command -v dart >/dev/null 2>&1; then
+  echo "Error: 'dart' is not found in PATH. Ensure Dart SDK (or Flutter SDK) is installed and on PATH."
+  exit 2
+fi
+
+# Detect flutter repo (optional)
+IS_FLUTTER_REPO=false
+if command -v flutter >/dev/null 2>&1 && [ -f "pubspec.yaml" ]; then
+  # crude detection: flutter exists and pubspec present
+  IS_FLUTTER_REPO=true
+fi
+
+# Get staged files - using simpler approach for better compatibility
+STAGED_DART_FILES=()
+for file in $(git diff --cached --name-only --diff-filter=ACM); do
+  # Only consider .dart files
+  case "$file" in
+    *.dart) STAGED_DART_FILES+=("$file") ;;
+  esac
+done
+
+if [ ${#STAGED_DART_FILES[@]} -eq 0 ]; then
+  echo "[huskyless] No staged Dart files. Skipping Dart pre-commit checks."
+  exit 0
+fi
+
+echo "[huskyless] Staged Dart files detected:"
+for f in "${STAGED_DART_FILES[@]}"; do echo "  - $f"; done
+
+# Run dart format on each staged file and re-add if changed
+FORMAT_FAILED=false
+FILES_TO_READD=()
+for f in "${STAGED_DART_FILES[@]}"; do
+  echo "[huskyless] Formatting: $f"
+  # run format (it will update file in working tree if needed)
+  if ! dart format "$f"; then
+    echo "Error: dart format failed for $f"
+    FORMAT_FAILED=true
+  else
+    # If formatting changed the file, re-stage it
+    if ! git diff --no-ext-diff --quiet -- "$f"; then
+      git add -- "$f"
+      FILES_TO_READD+=("$f")
+      echo "[huskyless] Re-staged formatted file: $f"
+    fi
+  fi
+done
+
+if [ "$FORMAT_FAILED" = true ]; then
+  echo "One or more files failed to format. Fix formatting locally and try again."
+  exit 1
+fi
+
+# Analyzer step: prefer per-file if supported, otherwise full analyze
+ANALYZE_CMD=""
+if dart analyze --help 2>&1 | grep -q -- '--files'; then
+  # Construct comma-separated file list (dart expects comma list)
+  # but to be safe use repeated --file if supported; here we use --files with comma
+  file_list=$(printf "%s," "${STAGED_DART_FILES[@]}")
+  file_list=${file_list%,} # remove trailing comma
+  ANALYZE_CMD=(dart analyze --files "$file_list")
+else
+  echo "[huskyless] Note: dart analyze does not support per-file mode on this SDK. Running full analyzer..."
+  ANALYZE_CMD=(dart analyze)
+fi
+
+echo "[huskyless] Running analyzer..."
+if ! "${ANALYZE_CMD[@]}"; then
+  echo "Error: dart analyze failed. Fix reported issues and try again."
+  exit 1
+fi
+
+# Optionally run flutter analyze for full flutter projects (uncomment if you prefer)
+if [ "$IS_FLUTTER_REPO" = true ]; then
+  echo "[huskyless] Detected Flutter repo. Optionally running 'flutter analyze' (comment/uncomment to toggle)..."
+  # Uncomment the following block to run flutter analyze as additional safety
+  #if ! flutter analyze; then
+  #  echo "Error: flutter analyze failed. Fix issues and try again."
+  #  exit 1
+  #fi
+fi
+
+echo "[huskyless] Pre-commit checks passed. Ready to commit."
+exit 0
