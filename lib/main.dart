@@ -6,11 +6,13 @@ import 'package:untitled/app/constant/color_constant.dart';
 import 'package:untitled/app/di/injector.dart';
 import 'package:untitled/app/helper/extension_helper.dart';
 import 'package:untitled/app/routes/route_constant.dart';
+import 'package:untitled/app/services/notification_service.dart';
 import 'package:untitled/app/widgets/app_text.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppInjector.registerAll();
+  await AppInjector.get<NotificationService>().init();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -45,8 +47,9 @@ class MyApp extends StatelessWidget {
                 defaultTransition: Transition.fadeIn,
                 builder: (context, child) {
                   return MediaQuery(
-                    data: MediaQuery.of(context)
-                        .copyWith(textScaler: TextScaler.noScaling),
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(textScaler: TextScaler.noScaling),
                     child: child ?? const SizedBox(),
                   );
                 },
@@ -54,8 +57,7 @@ class MyApp extends StatelessWidget {
             ),
             if (AppConfig.showFeedbackStrip)
               InkWell(
-                onTap: () =>
-                    AppConfig.feedbackEmail.launchStoreRating(),
+                onTap: () => AppConfig.feedbackEmail.launchStoreRating(),
                 child: Container(
                   height: 120,
                   width: 30,
