@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:untitled/app/config/app_config.dart';
 import 'package:untitled/app/constant/color_constant.dart';
+import 'package:untitled/app/constant/string_constant.dart';
 import 'package:untitled/app/di/injector.dart';
 import 'package:untitled/app/helper/extension_helper.dart';
 import 'package:untitled/app/routes/route_constant.dart';
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
             GestureDetector(
               onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
               child: GetMaterialApp(
-                title: 'CC Event Management',
+                title: StringConstant.appName,
                 theme: ThemeData(
                   colorScheme: ColorScheme.fromSeed(
                     seedColor: Colors.deepPurple,

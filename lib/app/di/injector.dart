@@ -1,9 +1,5 @@
 import 'package:get_it/get_it.dart';
 import 'package:untitled/app/services/notification_service.dart';
-import 'package:untitled/repository/authentication/auth_repository.dart';
-import 'package:untitled/repository/authentication/authentication_helper.dart';
-import 'package:untitled/repository/utils/utils_helper.dart';
-import 'package:untitled/repository/utils/utils_repository.dart';
 
 /// Central dependency injection. Use [AppInjector] instead of a global GetIt variable.
 /// Register dependencies in [registerAll], resolve with [get<T>].
@@ -18,8 +14,6 @@ class AppInjector {
   static Future<void> registerAll() async {
     if (_initialized) return;
     _instance.registerSingleton<NotificationService>(NotificationService());
-    _instance.registerSingleton<AuthRepository>(AuthRepositoryImpl());
-    _instance.registerSingleton<UtilsRepository>(UtilsRepositoryImpl());
     _initialized = true;
   }
 
